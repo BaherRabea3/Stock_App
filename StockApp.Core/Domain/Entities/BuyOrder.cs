@@ -1,0 +1,21 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+
+namespace StockApp.Core.Domain.Entities
+{
+    public class BuyOrder
+    {
+        [Key]
+        public Guid BuyOrderId { get; set; }
+        public string StockSymbol { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Stock Name can't be null or empty")]
+        public string StockName { get; set; } = string.Empty;
+        public DateTime DateAndTimeOfOrder { get; set; }
+
+        [Range(1, 100000, ErrorMessage = "You can buy maximum of 100000 shares in single order. Minimum is 1.")]
+        public uint Quantity { get; set; }
+
+        [Range(1, 10000, ErrorMessage = "The maximum price of stock is 10000. Minimum is 1")]
+        public double Price { get; set; }
+    }
+}

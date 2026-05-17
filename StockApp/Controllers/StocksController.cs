@@ -1,0 +1,54 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using StockApp.Core.ServiceContracts.FinhubServiceContract;
+using StockApp.ViewModel;
+
+namespace StockApp.Controllers
+{
+    [Route("[controller]")]
+    public class StocksController : Controller
+    {
+        private readonly TradingOptions _tradingOptions;
+        private readonly IFinhubStocksService _finnhubStocksService;
+
+
+        public StocksController(IOptions<TradingOptions> tradingOptions, IFinhubStocksService finnhubStocksService)
+        {
+            _tradingOptions = tradingOptions.Value;
+            _finnhubStocksService = finnhubStocksService;
+        }
+
+
+        [Route("/")]
+        [Route("[action]/{stock?}")]
+        [Route("~/[action]/{stock?}")]
+        public async Task<IActionResult> Explore(string? stock, bool showAll = false)
+        {
+            List<Dictionary<string, string>>? stocksDictionary = await _finnhubStocksService.GetStocks();
+
+            List<Stock> stocks = new List<Stock>();
+
+            if (stocksDictionary is not null)
+            {
+                //filter stocks
+                if (!showAll && _tradingOptions.Top25PopularStocks != null)
+                {
+                    string[]? Top25PopularStocksList = _tradingOptions.Top25PopularStocks.Split(",");
+                    if (Top25PopularStocksList is not null)
+                    {
+                        stocksDictionary = stocksDictionary
+                         .Where(temp => Top25PopularStocksList.Contains(Convert.ToString(temp["symbol"])))
+                         .ToList();
+                    }
+                }
+
+                stocks = stocksDictionary
+                 .Select(temp => new Stock() { StockName = Convert.ToString(temp["description"]), StockSymbol = Convert.ToString(temp["symbol"]) })
+                .ToList();
+            }
+
+            ViewBag.stock = stock;
+            return View(stocks);
+        }
+    }
+}
